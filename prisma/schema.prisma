@@ -1,0 +1,97 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  password     String
+  name         String?
+  address      String?
+  phone        String?
+  image        String?
+  role         RoleType @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  carts        Cart[]   @relation("UserCart")
+  orders       Order[]
+}
+
+enum RoleType {
+  ADMIN
+  USER
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  products  Product[]
+}
+
+model Product {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  stock       Int
+  image       String?
+  category    Category   @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+}
+
+model Order {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  items         OrderItem[]
+  createdAt     DateTime  @default(now())
+  total         Float
+  status        OrderStatus @default(NEW)
+  shippingName  String?
+  shippingAddress String?
+  shippingPhone String?
+  updatedAt     DateTime  @updatedAt
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   Int
+  quantity  Int
+}
+
+model Cart {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation("UserCart", fields: [userId], references: [id])
+  userId      Int
+  items       CartItem[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model CartItem {
+  id          Int       @id @default(autoincrement())
+  cart        Cart      @relation(fields: [cartId], references: [id])
+  cartId      Int
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   Int
+  quantity    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum OrderStatus {
+  NEW
+  PROCESSING
+  SHIPPED
+  DELIVERED
+}
